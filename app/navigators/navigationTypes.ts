@@ -6,6 +6,11 @@ import {
   NavigatorScreenParams,
 } from "@react-navigation/native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
+import { MapStackParamList } from "@/screens/Map/MapStack"
+import { DevicesStackParamList } from "@/screens/Devices/DevicesStack"
+import { SettingsStackParamList } from "@/screens/Settings/SettingsStack"
+import { AlertsStackParamList } from "@/screens/Alerts/AlertsStack"
+import { MainTabParamList } from "./MainTabNavigator"
 
 // Demo Tab Navigator types
 export type DemoTabParamList = {
@@ -22,6 +27,11 @@ export type AppStackParamList = {
   Demo: NavigatorScreenParams<DemoTabParamList>
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+   MainTab: NavigatorScreenParams<MainTabParamList> | undefined
+  Map: NavigatorScreenParams<MapStackParamList>
+  Settings: NavigatorScreenParams<SettingsStackParamList>
+  Devices: NavigatorScreenParams<DevicesStackParamList>
+  Alerts: NavigatorScreenParams<AlertsStackParamList>
 }
 
 export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStackScreenProps<

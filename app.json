@@ -11,9 +11,7 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": [
-    "**/*"
-  ],
+  "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.gps.traker",
@@ -22,12 +20,20 @@
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
     "allowBackup": false,
-    "edgeToEdgeEnabled": true
+    "edgeToEdgeEnabled": true,
+    "config": {
+      "googleMaps": {
+        "apiKey": "AIzaSyAsJUTNW_9lvTadiUKDFX51fLRQn6LFc_o"
+      }
+    }
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.gps.traker"
+    "bundleIdentifier": "com.gps.traker",
+    "config": {
+      "googleMapsApiKey": "AIzaSyCHjY6bO2CcUkspljJFBulWS4G8Q-r73dU"
+    }
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
@@ -54,7 +60,14 @@
         }
       }
     ],
-    "expo-build-properties"
+    "expo-build-properties",
+    [
+      "react-native-maps",
+      {
+        "iosGoogleMapsApiKey": "AIzaSyCHjY6bO2CcUkspljJFBulWS4G8Q-r73dU",
+        "androidGoogleMapsApiKey": "AIzaSyAsJUTNW_9lvTadiUKDFX51fLRQn6LFc_o"
+      }
+    ]
   ],
   "experiments": {
     "tsconfigPaths": true

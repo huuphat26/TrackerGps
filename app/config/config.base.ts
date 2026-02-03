@@ -2,6 +2,12 @@ export interface ConfigBaseProps {
   persistNavigation: "always" | "dev" | "prod" | "never"
   catchErrors: "always" | "dev" | "prod" | "never"
   exitRoutes: string[]
+  API_URL: string
+  GOOGLE_MAPS_API_KEY?: string
+  ADAFRUIT: {
+    username: string
+    aioKey: string
+  }
 }
 
 export type PersistNavigationConfig = ConfigBaseProps["persistNavigation"]

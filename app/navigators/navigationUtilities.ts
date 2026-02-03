@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { BackHandler, Linking, Platform } from "react-native"
 import {
   NavigationState,
   PartialState,
   createNavigationContainerRef,
+  StackActions,
 } from "@react-navigation/native"
 
 import Config from "@/config"
@@ -11,7 +12,7 @@ import type { PersistNavigationConfig } from "@/config/config.base"
 import * as storage from "@/utils/storage"
 import { useIsMounted } from "@/utils/useIsMounted"
 
-import type { AppStackParamList, NavigationProps } from "./navigationTypes"
+import { AppStackParamList, NavigationProps } from "./navigationTypes"
 
 type Storage = typeof storage
 
@@ -133,7 +134,7 @@ export function useNavigationPersistence(storage: Storage, persistenceKey: strin
       if (previousRouteName !== currentRouteName) {
         // track screens.
         if (__DEV__) {
-          console.log(currentRouteName)
+          console.log(`Navigated to: ${currentRouteName}`)
         }
       }
 
@@ -165,7 +166,12 @@ export function useNavigationPersistence(storage: Storage, persistenceKey: strin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return { onNavigationStateChange, restoreState, isRestored, initialNavigationState }
+  return {
+    onNavigationStateChange,
+    restoreState,
+    isRestored,
+    initialNavigationState,
+  }
 }
 
 /**
@@ -200,9 +206,112 @@ export function goBack() {
  * @returns {void}
  */
 export function resetRoot(
-  state: Parameters<typeof navigationRef.resetRoot>[0] = { index: 0, routes: [] },
+  state: Parameters<typeof navigationRef.resetRoot>[0] = {
+    index: 0,
+    routes: [],
+  },
 ) {
   if (navigationRef.isReady()) {
     navigationRef.resetRoot(state)
   }
+}
+
+/**
+ * Một service đơn giản để gọi navigation từ bất cứ chỗ nào trong code,
+ * không cần phải truyền prop `navigation` xuống từng component.
+ */
+type NavigationServiceType = {
+  /**
+   * Điều hướng đến screen đã định nghĩa trong AppStackParamList
+   * @param name   Tên screen
+   * @param params (tuỳ chọn) params tương ứng với screen đó
+   */
+  navigate: <T extends keyof AppStackParamList>(name: T, params?: AppStackParamList[T]) => void
+
+  /**
+   * Thay thế screen hiện tại bằng screen mới trong stack
+   * @param name   Tên screen
+   * @param params (tuỳ chọn) params tương ứng với screen đó
+   */
+  replace: <T extends keyof AppStackParamList>(name: T, params?: AppStackParamList[T]) => void
+
+  /**
+   * Quay lại màn hình trước đó (nếu có)
+   */
+  push: <T extends keyof AppStackParamList>(name: T, params?: AppStackParamList[T]) => void
+
+  /**
+   * Quay lại màn hình trước đó (nếu có)
+   */
+  goBack: () => void
+
+  /**
+   * Mở drawer navigation
+   */
+  openDrawer: () => void
+
+  /**
+   * Reset navigation state
+   * @param state Navigation state to reset to
+   */
+  reset: (state: Parameters<typeof navigationRef.resetRoot>[0]) => void
+}
+
+export const NavigationService: NavigationServiceType = {
+  navigate: (name, params) => {
+    if (navigationRef.current) {
+      // @ts-ignore: TypeScript đôi khi không khớp params, nên ta cast tạm
+      navigationRef.current.navigate(name as any, params as any)
+    }
+  },
+
+  replace: (name, params) => {
+    if (navigationRef.current) {
+      // @ts-ignore: TypeScript đôi khi không khớp params, nên ta cast tạm
+      navigationRef.current.dispatch(StackActions.replace(name as any, params as any))
+    }
+  },
+
+  push: (name, params) => {
+    if (navigationRef.current) {
+      navigationRef.current.dispatch(StackActions.push(name as any, params as any))
+    }
+  },
+
+  goBack: () => {
+    if (navigationRef.current?.canGoBack()) {
+      navigationRef.current.goBack()
+    }
+  },
+
+  reset: (state) => {
+    if (navigationRef.current) {
+      navigationRef.current.resetRoot(state)
+    }
+  },
+
+  openDrawer: () => {
+    console.log("NavigationService.openDrawer called")
+    if (navigationRef.current) {
+      console.log("navigationRef.current exists, calling openDrawer...")
+      try {
+        // Try to call openDrawer directly on the navigation ref
+        // @ts-ignore - drawer navigation method
+        navigationRef.current.openDrawer()
+        console.log("openDrawer() called successfully")
+      } catch (error) {
+        console.log("Error calling openDrawer:", error)
+        // Try alternative approach - navigate to a screen that can open drawer
+        try {
+          // @ts-ignore
+          navigationRef.current.navigate("MainTab")
+          console.log("Navigated to MainTab as fallback")
+        } catch (fallbackError) {
+          console.log("Fallback navigation also failed:", fallbackError)
+        }
+      }
+    } else {
+      console.log("navigationRef.current is null")
+    }
+  },
 }
