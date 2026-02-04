@@ -2,48 +2,100 @@ import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { FC, useCallback, useEffect, useRef, useState } from "react"
 import { View, ViewStyle } from "react-native"
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps"
+import SvgIcon from "@/components/SvgIcon"
+import { NativeStackScreenProps } from "@react-navigation/native-stack"
+import { CompositeScreenProps } from "@react-navigation/native"
+import { AppStackParamList } from "@/navigators/navigationTypes"
+import { MapStackParamList } from "./MapStack"
+import { MarkerInfoSheet, MarkerInfo } from "./MarkerInfoSheet"
+import { ImageViewerSheet } from "./ImageViewerSheet"
+import { HistorySheet } from "./HistorySheet"
+import { useHistoryData, HistoryLogEntry } from "@/services/maps/useHistoryData"
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps"
+import { cameraCommandService } from "@/services/mqtt/CameraCommandService"
+import { useMap } from "@/services/maps"
+import { MapMarker } from "@/services/maps/MapService"
+import { useMqtt } from "@/services/mqtt"
+import { cameraUploadService } from "@/services/mqtt/CameraUploadService"
+import { gpsFeedService } from "@/services/mqtt/GpsFeedService"
 import { BottomSheetModal } from "@gorhom/bottom-sheet"
 import Config from "@/config"
-import { useMap } from "@/services/maps/useMap"
-import { useMqtt } from "@/services/mqtt/useMqtt"
-import { gpsFeedService } from "@/services/mqtt/GpsFeedService"
-import { cameraUploadService } from "@/services/mqtt/CameraUploadService"
-import { cameraCommandService } from "@/services/mqtt/CameraCommandService"
-import { MapMarker } from "@/services/maps/MapService"
-import SvgIcon from "@/components/SvgIcon"
-import { MarkerInfoSheet } from "./MarkerInfoSheet"
-import { ImageViewerSheet } from "./ImageViewerSheet"
 
-interface MapViewScreenProps {}
-const MapScreen: FC<MapViewScreenProps> = () => {
-  const { themed } = useAppTheme()
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<MapStackParamList, "MapScreen">,
+  NativeStackScreenProps<AppStackParamList>
+>
+
+const MapScreen: FC<Props> = ({ navigation, route }) => {
+  const { mode, deviceId } = route.params || {}
+
+  const { themed, theme } = useAppTheme()
   const { mapRef, region, markers, addMarker, animateToCoordinate } = useMap()
-  const { connect } = useMqtt()
+  const { fetchHistory } = useHistoryData()
+
   const bottomSheetRef = useRef<BottomSheetModal | null>(null)
   const imageViewerRef = useRef<BottomSheetModal | null>(null)
-  const [selectedMarkerInfo, setSelectedMarkerInfo] = useState<any>(null)
+  const historySheetRef = useRef<BottomSheetModal | null>(null)
+
+  const [selectedMarkerInfo, setSelectedMarkerInfo] = useState<MarkerInfo | null>(null)
   const [cameraImage, setCameraImage] = useState<string | null>(null)
   const [isLoadingImage, setIsLoadingImage] = useState(false)
 
-  useEffect(() => {
-    const testCoordinate = {
-      latitude: 10.8231,
-      longitude: 106.6297,
-    }
+  const [historyPoints, setHistoryPoints] = useState<HistoryLogEntry[]>([])
+  const [currentPlayIndex, setCurrentPlayIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const playInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
-    animateToCoordinate(testCoordinate)
-    const testMarker: MapMarker = {
-      id: "test-location",
-      coordinate: testCoordinate,
-      title: "Michael Turner",
-      description: "Toyota Camry • Black",
+  const { connect } = useMqtt()
+
+  useEffect(() => {
+    if (mode === "history") {
+      const loadHistory = async () => {
+        const data = await fetchHistory(new Date(), "1")
+        setHistoryPoints(data)
+        if (data.length > 0) {
+          animateToCoordinate(data[0].coordinate)
+          historySheetRef.current?.present()
+        }
+      }
+      loadHistory()
     }
-    addMarker(testMarker)
-  }, [])
+  }, [mode])
+
+  useEffect(() => {
+    if (isPlaying) {
+      playInterval.current = setInterval(() => {
+        setCurrentPlayIndex((prev) => {
+          if (prev >= historyPoints.length - 1) {
+            setIsPlaying(false)
+            return prev
+          }
+          const next = prev + 1
+          animateToCoordinate(historyPoints[next].coordinate)
+          return next
+        })
+      }, 1000)
+    } else {
+      if (playInterval.current) clearInterval(playInterval.current)
+    }
+    return () => {
+      if (playInterval.current) clearInterval(playInterval.current)
+    }
+  }, [isPlaying, historyPoints])
+
+  useEffect(() => {
+    if (mode === "live" && deviceId && markers.length > 0) {
+      const targetMarker = markers.find((m) => m.id === deviceId)
+      if (targetMarker) {
+        animateToCoordinate(targetMarker.coordinate)
+      }
+    }
+  }, [mode, deviceId, markers])
 
   useEffect(() => {
     const connectMqtt = async () => {
+      if (mode === "history") return // Don't connect MQTT in history mode if not needed
+
       if (Config.ADAFRUIT.username && Config.ADAFRUIT.aioKey) {
         await connect({
           username: Config.ADAFRUIT.username,
@@ -54,9 +106,11 @@ const MapScreen: FC<MapViewScreenProps> = () => {
       }
     }
     connectMqtt()
-  }, [])
+  }, [mode])
 
   useEffect(() => {
+    if (mode === "history") return // Don't listen to live updates in history mode
+
     const unsubscribeGps = gpsFeedService.onLocationUpdate((location) => {
       const newCoordinate = {
         latitude: location.lat,
@@ -83,7 +137,7 @@ const MapScreen: FC<MapViewScreenProps> = () => {
       unsubscribeGps()
       unsubscribeCamera()
     }
-  }, [])
+  }, [mode])
 
   const handleMarkerPress = useCallback((marker: MapMarker) => {
     const markerData = {
@@ -126,20 +180,42 @@ const MapScreen: FC<MapViewScreenProps> = () => {
     }, 15000)
   }, [isLoadingImage])
 
+  const handleViewHistory = useCallback(() => {
+    bottomSheetRef.current?.dismiss()
+    navigation.navigate("History", {
+      screen: "HistoryScreen",
+      params: { deviceId: selectedMarkerInfo?.id },
+    })
+  }, [selectedMarkerInfo, navigation])
+
   return (
     <View style={themed($container)}>
       <MapView ref={mapRef} provider={PROVIDER_GOOGLE} style={{ flex: 1 }} region={region}>
-        {markers.map((marker) => (
-          <Marker
-            key={marker.id}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            description={marker.description}
-            onPress={() => handleMarkerPress(marker)}
-          >
-            <SvgIcon icon="Car" size={50} />
-          </Marker>
-        ))}
+        {mode !== "history" &&
+          markers.map((marker) => (
+            <Marker
+              key={marker.id}
+              coordinate={marker.coordinate}
+              title={marker.title}
+              description={marker.description}
+              onPress={() => handleMarkerPress(marker)}
+            >
+              <SvgIcon icon="Car" size={50} />
+            </Marker>
+          ))}
+
+        {mode === "history" && historyPoints.length > 0 && (
+          <>
+            <Polyline
+              coordinates={historyPoints.map((p) => p.coordinate)}
+              strokeWidth={4}
+              strokeColor={theme.colors.brand.primary}
+            />
+            <Marker coordinate={historyPoints[currentPlayIndex].coordinate}>
+              <SvgIcon icon="Car" size={40} fill={theme.colors.brand.primary} />
+            </Marker>
+          </>
+        )}
       </MapView>
 
       <MarkerInfoSheet
@@ -147,9 +223,23 @@ const MapScreen: FC<MapViewScreenProps> = () => {
         markerInfo={selectedMarkerInfo}
         onRequestImage={handleRequestImage}
         onCall={() => console.log("Call driver")}
+        onViewHistory={handleViewHistory}
       />
 
       <ImageViewerSheet ref={imageViewerRef} imageUri={cameraImage} isLoading={isLoadingImage} />
+
+      <HistorySheet
+        ref={historySheetRef}
+        isPlaying={isPlaying}
+        onPlayPause={() => setIsPlaying(!isPlaying)}
+        progress={currentPlayIndex / (historyPoints.length - 1 || 1)}
+        onSliderChange={(val) => setCurrentPlayIndex(Math.floor(val * (historyPoints.length - 1)))}
+        stats={{
+          distance: "12.5 km",
+          duration: "45m",
+          avgSpeed: "28 km/h",
+        }}
+      />
     </View>
   )
 }

@@ -10,7 +10,7 @@ import { useAppTheme } from "@/theme/context"
 import SvgIcon from "@/components/SvgIcon"
 import { ThemedStyle } from "@/theme/types"
 
-interface MarkerInfo {
+export interface MarkerInfo {
   id: string
   name: string
   vehicle: {
@@ -26,10 +26,11 @@ interface MarkerInfoSheetProps {
   markerInfo?: MarkerInfo | null
   onRequestImage?: () => void
   onCall?: () => void
+  onViewHistory?: () => void
 }
 
 export const MarkerInfoSheet = forwardRef<BottomSheetModal, MarkerInfoSheetProps>(
-  ({ markerInfo, onRequestImage, onCall }, ref) => {
+  ({ markerInfo, onRequestImage, onCall, onViewHistory }, ref) => {
     const { themed, theme } = useAppTheme()
     const { colors } = theme
 
@@ -124,8 +125,22 @@ export const MarkerInfoSheet = forwardRef<BottomSheetModal, MarkerInfoSheetProps
                   <Text style={themed($buttonText)}>Request Image</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                  style={[
+                    themed($secondaryButton),
+                    { backgroundColor: "rgba(0, 122, 255, 0.2)", borderColor: colors.primary },
+                  ]}
+                  onPress={onViewHistory}
+                >
+                  <SvgIcon icon="History" size={theme.spacing.md} fill={colors.primary} />
+                </TouchableOpacity>
+
                 <TouchableOpacity style={themed($secondaryButton)} onPress={onCall}>
-                  <SvgIcon icon="Camera" size={theme.spacing.md} fill={colors.palette.iosSuccess} />
+                  <SvgIcon
+                    icon="Gallery"
+                    size={theme.spacing.md}
+                    fill={colors.palette.iosSuccess}
+                  />
                 </TouchableOpacity>
               </View>
             </>

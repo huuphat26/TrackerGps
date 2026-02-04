@@ -10,10 +10,12 @@ import { spacing } from "@/theme/spacing"
 import { MapStack } from "@/screens/Map/MapStack"
 import { DevicesStack } from "@/screens/Devices/DevicesStack"
 import { SettingsStack } from "@/screens/Settings/SettingsStack"
+import { HistoryStack } from "@/screens/History/HistoryStack"
 
 export type MainTabParamList = {
   Map: undefined
   Devices: undefined
+  History: undefined
   Alerts: undefined
   Settings: undefined
 }
@@ -122,6 +124,15 @@ export function MainTabNavigator() {
         options={{
           tabBarLabel: "Devices",
           tabBarIcon: ({ focused }) => renderTabBarIcon("Devices", focused),
+        }}
+      />
+
+      <Tab.Screen
+        name="History"
+        component={HistoryStack}
+        options={{
+          tabBarLabel: "History",
+          tabBarIcon: ({ focused }) => renderTabBarIcon("History", focused),
         }}
       />
 

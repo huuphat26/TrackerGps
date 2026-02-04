@@ -1,15 +1,14 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
-
 import { useAppTheme } from "@/theme/context"
-import MapScreen from "./MapScreen"
+import { HistoryScreen } from "./HistoryScreen"
 
-export type MapStackParamList = {
-  MapScreen: { mode?: "history" | "live"; deviceId?: string }
+export type HistoryStackParamList = {
+  HistoryScreen: { deviceId?: string }
 }
 
-const Stack = createNativeStackNavigator<MapStackParamList>()
+const Stack = createNativeStackNavigator<HistoryStackParamList>()
 
-export const MapStack = () => {
+export const HistoryStack = () => {
   const {
     theme: { colors },
   } = useAppTheme()
@@ -22,7 +21,7 @@ export const MapStack = () => {
         contentStyle: { backgroundColor: colors.background, paddingTop: 0 },
       }}
     >
-      <Stack.Screen name="MapScreen" component={MapScreen} />
+      <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
     </Stack.Navigator>
   )
 }

@@ -8,14 +8,14 @@ import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
-import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { useAppTheme } from "@/theme/context"
 
-import { DemoNavigator } from "./DemoNavigator"
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { MainTabNavigator } from "./MainTabNavigator"
+import { MapStack } from "@/screens/Map/MapStack"
+import { HistoryStack } from "@/screens/History/HistoryStack"
 
 /**
  * This is a list of all the route names that will exit the app if the back button
@@ -27,8 +27,6 @@ const exitRoutes = Config.exitRoutes
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
-  const { isAuthenticated } = useAuth()
-
   const {
     theme: { colors },
   } = useAppTheme()
@@ -49,6 +47,8 @@ const AppStack = () => {
       initialRouteName="MainTab"
     >
       <Stack.Screen name="MainTab" component={MainTabNavigator} />
+      <Stack.Screen name="History" component={HistoryStack} />
+      <Stack.Screen name="Map" component={MapStack} />
     </Stack.Navigator>
   )
 }
