@@ -1,28 +1,20 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
-
-import { useAppTheme } from "@/theme/context"
-import MapScreen from "./MapScreen"
+import LiveMapScreen from "./LiveMapScreen"
 
 export type MapStackParamList = {
-  MapScreen: { mode?: "history" | "live"; deviceId?: string }
+  LiveMapScreen: { deviceId?: string } | undefined
 }
 
 const Stack = createNativeStackNavigator<MapStackParamList>()
 
 export const MapStack = () => {
-  const {
-    theme: { colors },
-  } = useAppTheme()
-
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        navigationBarColor: colors.background,
-        contentStyle: { backgroundColor: colors.background, paddingTop: 0 },
       }}
     >
-      <Stack.Screen name="MapScreen" component={MapScreen} />
+      <Stack.Screen name="LiveMapScreen" component={LiveMapScreen} />
     </Stack.Navigator>
   )
 }

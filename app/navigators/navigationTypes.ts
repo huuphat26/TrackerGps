@@ -12,6 +12,8 @@ import { SettingsStackParamList } from "@/screens/Settings/SettingsStack"
 import { AlertsStackParamList } from "@/screens/Alerts/AlertsStack"
 import { HistoryStackParamList } from "@/screens/History/HistoryStack"
 import { MainTabParamList } from "./MainTabNavigator"
+import { SplashStackParamList } from "@/screens/Splash/SplashStack"
+import { AuthStackParamList } from "@/screens/Auth/AuthStack"
 
 // Demo Tab Navigator types
 export type DemoTabParamList = {
@@ -34,6 +36,8 @@ export type AppStackParamList = {
   Settings: NavigatorScreenParams<SettingsStackParamList>
   Devices: NavigatorScreenParams<DevicesStackParamList>
   Alerts: NavigatorScreenParams<AlertsStackParamList>
+  Splash: NavigatorScreenParams<SplashStackParamList>
+  Auth: NavigatorScreenParams<AuthStackParamList>
 }
 
 export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStackScreenProps<

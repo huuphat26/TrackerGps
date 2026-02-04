@@ -3,11 +3,11 @@
  * Màu sắc chủ đạo cho nút nhấn, biểu tượng quan trọng và trạng thái hoạt động
  */
 const brandColors = {
-  primary: "#007AFF",      // Xanh iOS - tin cậy, công nghệ
-  secondary: "#F2F2F7",    // Xám nhạt - nút phụ, nền icon
-  success: "#34C759",      // Trạng thái Online/Thành công
-  warning: "#FFCC00",      // Trạng thái Pending/Chờ
-  danger: "#FF3B30",       // Trạng thái Offline/Lỗi/Logout
+  primary: "#007AFF", // Xanh iOS - tin cậy, công nghệ
+  secondary: "#F2F2F7", // Xám nhạt - nút phụ, nền icon
+  success: "#34C759", // Trạng thái Online/Thành công
+  warning: "#FFCC00", // Trạng thái Pending/Chờ
+  danger: "#FF3B30", // Trạng thái Offline/Lỗi/Logout
 } as const
 
 /**
@@ -15,11 +15,11 @@ const brandColors = {
  * Dành cho Devices List, Gallery, Account
  */
 const lightMode = {
-  background: "#FFFFFF",   // Trắng tuyệt đối
-  surface: "#F9F9F9",      // Xám nhạt - Card/List
-  textPrimary: "#000000",  // Đen - Tiêu đề, văn bản chính
+  background: "#FFFFFF", // Trắng tuyệt đối
+  surface: "#F9F9F9", // Xám nhạt - Card/List
+  textPrimary: "#000000", // Đen - Tiêu đề, văn bản chính
   textSecondary: "#8E8E93", // Xám - Metadata, mô tả phụ
-  border: "#E5E5EA",       // Đường kẻ phân cách
+  border: "#E5E5EA", // Đường kẻ phân cách
 } as const
 
 /**
@@ -27,9 +27,9 @@ const lightMode = {
  * Dành cho MapHome, CaptureViewer, trạng thái Connecting
  */
 const darkMode = {
-  background: "#1C1C1E",   // Đen xám sâu - tương phản với bản đồ
-  surface: "#2C2C2E",      // Bottom Sheet và Modals
-  textPrimary: "#FFFFFF",  // Trắng - Đọc tốt trên nền tối
+  background: "#1C1C1E", // Đen xám sâu - tương phản với bản đồ
+  surface: "#2C2C2E", // Bottom Sheet và Modals
+  textPrimary: "#FFFFFF", // Trắng - Đọc tốt trên nền tối
   textSecondary: "#AEAEB2", // Xám sáng - Thông tin phụ
   overlay: "rgba(0, 0, 0, 0.6)", // Lớp phủ làm mờ nền Modal
 } as const
@@ -39,10 +39,10 @@ const darkMode = {
  * Màu sắc cho bản đồ
  */
 const mapColors = {
-  water: "#A3CCFF",        // Xanh nhạt
-  roads: "#FFFFFF",        // Trắng
-  land: "#F2F2F2",         // Xám nhạt - bản đồ sáng
-  darkLand: "#242426",     // Bản đồ tối
+  water: "#A3CCFF", // Xanh nhạt
+  roads: "#FFFFFF", // Trắng
+  land: "#F2F2F2", // Xám nhạt - bản đồ sáng
+  darkLand: "#242426", // Bản đồ tối
 } as const
 
 /**
@@ -96,31 +96,31 @@ const palette = {
   // ========================================
 
   // Brand & Action Colors
-  iosPrimary: "#007AFF",      // Xanh iOS - tin cậy, công nghệ
-  iosSecondary: "#F2F2F7",    // Xám nhạt - nút phụ, nền icon
-  iosSuccess: "#34C759",      // Trạng thái Online/Thành công
-  iosWarning: "#FFCC00",      // Trạng thái Pending/Chờ
-  iosDanger: "#FF3B30",       // Trạng thái Offline/Lỗi/Logout
+  iosPrimary: "#007AFF", // Xanh iOS - tin cậy, công nghệ
+  iosSecondary: "#F2F2F7", // Xám nhạt - nút phụ, nền icon
+  iosSuccess: "#34C759", // Trạng thái Online/Thành công
+  iosWarning: "#FFCC00", // Trạng thái Pending/Chờ
+  iosDanger: "#FF3B30", // Trạng thái Offline/Lỗi/Logout
 
   // Light Mode Colors
-  lightBackground: "#FFFFFF",   // Trắng tuyệt đối
-  lightSurface: "#F9F9F9",      // Xám nhạt - Card/List
-  lightTextPrimary: "#000000",  // Đen - Tiêu đề, văn bản chính
+  lightBackground: "#FFFFFF", // Trắng tuyệt đối
+  lightSurface: "#F9F9F9", // Xám nhạt - Card/List
+  lightTextPrimary: "#000000", // Đen - Tiêu đề, văn bản chính
   lightTextSecondary: "#8E8E93", // Xám - Metadata, mô tả phụ
-  lightBorder: "#E5E5EA",       // Đường kẻ phân cách
+  lightBorder: "#E5E5EA", // Đường kẻ phân cách
 
   // Dark Mode Colors
-  darkBackground: "#1C1C1E",   // Đen xám sâu - tương phản với bản đồ
-  darkSurface: "#2C2C2E",      // Bottom Sheet và Modals
-  darkTextPrimary: "#FFFFFF",  // Trắng - Đọc tốt trên nền tối
+  darkBackground: "#1C1C1E", // Đen xám sâu - tương phản với bản đồ
+  darkSurface: "#2C2C2E", // Bottom Sheet và Modals
+  darkTextPrimary: "#FFFFFF", // Trắng - Đọc tốt trên nền tối
   darkTextSecondary: "#AEAEB2", // Xám sáng - Thông tin phụ
   darkOverlay: "rgba(0, 0, 0, 0.6)", // Lớp phủ làm mờ nền Modal
 
   // Map Style Colors
-  mapWater: "#A3CCFF",        // Xanh nhạt
-  mapRoads: "#FFFFFF",        // Trắng
-  mapLand: "#F2F2F2",         // Xám nhạt - bản đồ sáng
-  mapDarkLand: "#242426",     // Bản đồ tối
+  mapWater: "#A3CCFF", // Xanh nhạt
+  mapRoads: "#FFFFFF", // Trắng
+  mapLand: "#F2F2F2", // Xám nhạt - bản đồ sáng
+  mapDarkLand: "#242426", // Bản đồ tối
 } as const
 
 export const colors = {
@@ -158,6 +158,11 @@ export const colors = {
    * The default text color in many components.
    */
   text: palette.neutral800,
+
+  /**
+   * Text on secondary color.
+   */
+  textSecondary: "rgba(104, 104, 104, 1)",
 
   /**
    * Secondary text information.

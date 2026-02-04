@@ -19,7 +19,7 @@ type HistoryScreenProps = CompositeScreenProps<
 
 export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation }) => {
   const { theme, themed } = useAppTheme()
-  const { fetchHistory, currentDate, loading } = useHistoryData()
+  const { fetchHistory, currentDate } = useHistoryData()
   const [logs, setLogs] = useState<HistoryLogEntry[]>([])
 
   useEffect(() => {
@@ -122,16 +122,14 @@ export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation }) => {
           data={logs}
           renderItem={renderLogItem}
           keyExtractor={(item) => item.id}
-          // contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             <View style={themed($footer)}>
               <TouchableOpacity
                 style={themed($viewButton)}
                 onPress={() =>
-                  navigation.navigate("Map", {
-                    screen: "MapScreen",
-                    params: { mode: "history" },
+                  navigation.navigate("HistoryMapScreen", {
+                    deviceId: "1",
                   })
                 }
               >

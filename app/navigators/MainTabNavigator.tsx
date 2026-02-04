@@ -64,7 +64,7 @@ export function MainTabNavigator() {
   const renderTabBarIcon = (iconName: any, focused: boolean) => {
     return (
       <View style={{ alignItems: "center", justifyContent: "center" }}>
-        <SvgIcon icon={iconName} size={spacing.lg} fill={focused ? "#007AFF" : colors.textDim} />
+        <SvgIcon icon={iconName} size={spacing.lg} fill={focused ? "#FDD495" : colors.textDim} />
       </View>
     )
   }
@@ -132,7 +132,7 @@ export function MainTabNavigator() {
         component={HistoryStack}
         options={{
           tabBarLabel: "History",
-          tabBarIcon: ({ focused }) => renderTabBarIcon("History", focused),
+          tabBarIcon: ({ focused }) => renderTabBarIcon("TimeLine", focused),
         }}
       />
 

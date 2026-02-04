@@ -8,9 +8,9 @@ export const InformationSection = () => {
   const { themed } = useAppTheme()
   return (
     <>
-      <Text text="INFORMATION" style={themed($sectionLabel)} />
+      <Text text="Information" style={themed($sectionLabel)} />
       <View style={themed($sectionCard)}>
-        <InfoItem label="App Version" value="v1.0.4" isFirst />
+        <InfoItem label="App Version" value="v1.0.0" isFirst />
         <InfoItem label="Developer" value="Huu Phat" />
         <InfoItem label="Privacy Policy" hasChevron />
       </View>

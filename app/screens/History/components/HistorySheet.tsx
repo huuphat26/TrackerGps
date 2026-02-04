@@ -38,7 +38,7 @@ export const HistorySheet = forwardRef<BottomSheetModal, HistorySheetProps>(
     return (
       <BottomSheetModal
         ref={ref}
-        snapPoints={["35%"]}
+        // snapPoints={["45%"]}
         enablePanDownToClose={false}
         backgroundStyle={{
           backgroundColor: colors.palette.neutral100,

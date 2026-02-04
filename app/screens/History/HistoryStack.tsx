@@ -1,9 +1,12 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
+
 import { useAppTheme } from "@/theme/context"
-import { HistoryScreen } from "./HistoryScreen"
+import HistoryScreen from "./HistoryScreen"
+import HistoryMapScreen from "./HistoryMapScreen"
 
 export type HistoryStackParamList = {
-  HistoryScreen: { deviceId?: string }
+  HistoryScreen: { deviceId?: string } | undefined
+  HistoryMapScreen: { deviceId?: string } | undefined
 }
 
 const Stack = createNativeStackNavigator<HistoryStackParamList>()
@@ -22,6 +25,7 @@ export const HistoryStack = () => {
       }}
     >
       <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
+      <Stack.Screen name="HistoryMapScreen" component={HistoryMapScreen} />
     </Stack.Navigator>
   )
 }

@@ -16,6 +16,8 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { MainTabNavigator } from "./MainTabNavigator"
 import { MapStack } from "@/screens/Map/MapStack"
 import { HistoryStack } from "@/screens/History/HistoryStack"
+import { SplashStack } from "@/screens/Splash/SplashStack"
+import { AuthStack } from "@/screens/Auth/AuthStack"
 
 /**
  * This is a list of all the route names that will exit the app if the back button
@@ -46,6 +48,8 @@ const AppStack = () => {
       }}
       initialRouteName="MainTab"
     >
+      <Stack.Screen name="Splash" component={SplashStack} />
+      {/* <Stack.Screen name="Auth" component={AuthStack} /> */}
       <Stack.Screen name="MainTab" component={MainTabNavigator} />
       <Stack.Screen name="History" component={HistoryStack} />
       <Stack.Screen name="Map" component={MapStack} />

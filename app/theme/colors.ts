@@ -153,10 +153,15 @@ export const colors = {
    */
   transparent: "rgba(0, 0, 0, 0)",
 
-  /**
+ /**
    * The default text color in many components.
    */
-  text: palette.neutral800,
+  text: "rgba(37, 37, 37, 1)",
+
+  /**
+   * Text on secondary color.
+   */
+  textSecondary: "rgba(104, 104, 104, 1)",
 
   /**
    * Secondary text information.

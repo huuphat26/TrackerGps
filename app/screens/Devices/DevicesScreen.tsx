@@ -4,7 +4,6 @@ import { FC, useMemo } from "react"
 import { View, ViewStyle, FlatList, TextStyle, TouchableOpacity } from "react-native"
 import { Text } from "@/components/Text"
 import { Header } from "@/components/Header"
-import { Device, DeviceCard } from "@/components/DeviceCard"
 import SvgIcon from "@/components/SvgIcon"
 
 const MOCK_DEVICES: Device[] = [
@@ -38,6 +37,7 @@ const MOCK_DEVICES: Device[] = [
 ]
 
 import { useNavigation } from "@react-navigation/native"
+import { Device, DeviceCard } from "./components/DeviceCard"
 
 interface DevicesScreenProps {}
 

@@ -1,10 +1,9 @@
 import React from "react"
 import { View, ViewStyle, TextStyle, TouchableOpacity } from "react-native"
-import { Text } from "./Text"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
-import SvgIcon from "./SvgIcon"
-import { IconTypes } from "./Icon"
+import SvgIcon from "@/components/SvgIcon"
+import { Text } from "@/components/Text"
 
 export interface Device {
   id: string

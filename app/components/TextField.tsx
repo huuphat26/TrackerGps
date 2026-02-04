@@ -1,292 +1,313 @@
-import { ComponentType, forwardRef, Ref, useImperativeHandle, useRef } from "react"
+import { useMemo, useState, forwardRef } from "react"
 import {
-  ImageStyle,
+  Platform,
+  Pressable,
   StyleProp,
-  // eslint-disable-next-line no-restricted-imports
   TextInput,
   TextInputProps,
   TextStyle,
-  TouchableOpacity,
   View,
   ViewStyle,
 } from "react-native"
 
-import { isRTL } from "@/i18n"
-import { translate } from "@/i18n/translate"
+import type { ISvgType } from "@assets/svg"
+
+import SvgIcon from "@/components/SvgIcon"
+import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
-import { $styles } from "@/theme/styles"
-import type { ThemedStyle, ThemedStyleArray } from "@/theme/types"
+import type { ThemedStyle } from "@/theme/types"
 
-import { Text, TextProps } from "./Text"
+export type TextFieldSize = "lg" | "md" | "sm" | "xs"
+export type TextFieldStatus = "default" | "success" | "warning" | "danger" | "info"
 
-export interface TextFieldAccessoryProps {
-  style: StyleProp<ViewStyle | TextStyle | ImageStyle>
-  status: TextFieldProps["status"]
-  multiline: boolean
-  editable: boolean
+export interface AccessoryProps {
+  style?: StyleProp<ViewStyle>
 }
 
-export interface TextFieldProps extends Omit<TextInputProps, "ref"> {
-  /**
-   * A style modifier for different input states.
-   */
-  status?: "error" | "disabled"
-  /**
-   * The label text to display if not using `labelTx`.
-   */
-  label?: TextProps["text"]
-  /**
-   * Label text which is looked up via i18n.
-   */
-  labelTx?: TextProps["tx"]
-  /**
-   * Optional label options to pass to i18n. Useful for interpolation
-   * as well as explicitly setting locale or translation fallbacks.
-   */
-  labelTxOptions?: TextProps["txOptions"]
-  /**
-   * Pass any additional props directly to the label Text component.
-   */
-  LabelTextProps?: TextProps
-  /**
-   * The helper text to display if not using `helperTx`.
-   */
-  helper?: TextProps["text"]
-  /**
-   * Helper text which is looked up via i18n.
-   */
-  helperTx?: TextProps["tx"]
-  /**
-   * Optional helper options to pass to i18n. Useful for interpolation
-   * as well as explicitly setting locale or translation fallbacks.
-   */
-  helperTxOptions?: TextProps["txOptions"]
-  /**
-   * Pass any additional props directly to the helper Text component.
-   */
-  HelperTextProps?: TextProps
-  /**
-   * The placeholder text to display if not using `placeholderTx`.
-   */
-  placeholder?: TextProps["text"]
-  /**
-   * Placeholder text which is looked up via i18n.
-   */
-  placeholderTx?: TextProps["tx"]
-  /**
-   * Optional placeholder options to pass to i18n. Useful for interpolation
-   * as well as explicitly setting locale or translation fallbacks.
-   */
-  placeholderTxOptions?: TextProps["txOptions"]
-  /**
-   * Optional input style override.
-   */
-  style?: StyleProp<TextStyle>
-  /**
-   * Style overrides for the container
-   */
+export interface TextFieldProps extends Omit<TextInputProps, "style" | "onChange"> {
+  label?: string
+  required?: boolean
+  size?: TextFieldSize
+  status?: TextFieldStatus
+  subText?: string
   containerStyle?: StyleProp<ViewStyle>
-  /**
-   * Style overrides for the input wrapper
-   */
+  inputStyle?: StyleProp<TextStyle>
+  LeftAccessory?: React.ComponentType<AccessoryProps>
+  RightAccessory?: React.ComponentType<AccessoryProps>
+  leftIcon?: ISvgType
+  rightIcon?: ISvgType
+  onLeftPress?: () => void
+  onRightPress?: () => void
+  disabled?: boolean
+  labelColor?: string
+  labelStyle?: StyleProp<TextStyle>
+  fillColor?: string
   inputWrapperStyle?: StyleProp<ViewStyle>
-  /**
-   * An optional component to render on the right side of the input.
-   * Example: `RightAccessory={(props) => <Icon icon="ladybug" containerStyle={props.style} color={props.editable ? colors.textDim : colors.text} />}`
-   * Note: It is a good idea to memoize this.
-   */
-  RightAccessory?: ComponentType<TextFieldAccessoryProps>
-  /**
-   * An optional component to render on the left side of the input.
-   * Example: `LeftAccessory={(props) => <Icon icon="ladybug" containerStyle={props.style} color={props.editable ? colors.textDim : colors.text} />}`
-   * Note: It is a good idea to memoize this.
-   */
-  LeftAccessory?: ComponentType<TextFieldAccessoryProps>
+  onFocus?: () => void
+  onBlur?: () => void
 }
-
-/**
- * A component that allows for the entering and editing of text.
- * @see [Documentation and Examples]{@link https://docs.infinite.red/ignite-cli/boilerplate/app/components/TextField/}
- * @param {TextFieldProps} props - The props for the `TextField` component.
- * @returns {JSX.Element} The rendered `TextField` component.
- */
-export const TextField = forwardRef(function TextField(props: TextFieldProps, ref: Ref<TextInput>) {
+const TextField = forwardRef<TextInput, TextFieldProps>((props, ref) => {
   const {
-    labelTx,
     label,
-    labelTxOptions,
-    placeholderTx,
-    placeholder,
-    placeholderTxOptions,
-    helper,
-    helperTx,
-    helperTxOptions,
-    status,
-    RightAccessory,
+    required,
+    size = "md",
+    status = "default",
+    subText,
+    containerStyle,
+    inputStyle,
     LeftAccessory,
-    HelperTextProps,
-    LabelTextProps,
-    style: $inputStyleOverride,
-    containerStyle: $containerStyleOverride,
-    inputWrapperStyle: $inputWrapperStyleOverride,
-    ...TextInputProps
+    RightAccessory,
+    leftIcon,
+    rightIcon,
+    onLeftPress,
+    onRightPress,
+    disabled,
+    secureTextEntry,
+    labelColor: _labelColor,
+    labelStyle,
+    fillColor,
+    inputWrapperStyle,
+    onFocus,
+    onBlur,
+    ...textInputProps
   } = props
-  const input = useRef<TextInput>(null)
 
-  const {
-    themed,
-    theme: { colors },
-  } = useAppTheme()
+  const { theme, themed } = useAppTheme()
+  const { colors, typography } = theme
 
-  const disabled = TextInputProps.editable === false || status === "disabled"
+  const [focused, setFocused] = useState(false)
 
-  const placeholderContent = placeholderTx
-    ? translate(placeholderTx, placeholderTxOptions)
-    : placeholder
+  const dims = useMemo(() => getSizeDimensions(size), [size])
 
-  const $containerStyles = [$containerStyleOverride]
-
-  const $labelStyles = [$labelStyle, LabelTextProps?.style]
-
-  const $inputWrapperStyles = [
-    $styles.row,
-    $inputWrapperStyle,
-    status === "error" && { borderColor: colors.error },
-    TextInputProps.multiline && { minHeight: 112 },
-    LeftAccessory && { paddingStart: 0 },
-    RightAccessory && { paddingEnd: 0 },
-    $inputWrapperStyleOverride,
-  ]
-
-  const $inputStyles: ThemedStyleArray<TextStyle> = [
-    $inputStyle,
-    disabled && { color: colors.textDim },
-    isRTL && { textAlign: "right" as TextStyle["textAlign"] },
-    TextInputProps.multiline && { height: "auto" },
-    $inputStyleOverride,
-  ]
-
-  const $helperStyles = [
-    $helperStyle,
-    status === "error" && { color: colors.error },
-    HelperTextProps?.style,
-  ]
-
-  /**
-   *
-   */
-  function focusInput() {
-    if (disabled) return
-
-    input.current?.focus()
+  function getBorderColor(): string {
+    if (disabled) return colors.border
+    if (status === "danger") return colors.error as string
+    if (focused) return "#EEEEEE"
+    switch (status) {
+      case "success":
+        return colors.primary as string
+      case "warning":
+        return colors.palette.accent500 as string
+      case "info":
+        return colors.palette.secondary400 as string
+      case "default":
+        return colors.border as string
+      default:
+        return colors.border as string
+    }
   }
 
-  useImperativeHandle(ref, () => input.current as TextInput)
+  function getSubTextColor(): string | undefined {
+    switch (status) {
+      case "danger":
+        return colors.error as string
+      case "success":
+        return colors.primary as string
+      case "warning":
+        return colors.palette.accent500 as string
+      case "info":
+        return colors.palette.secondary400 as string
+      default:
+        return undefined
+    }
+  }
+
+  function getValueColor(): string {
+    if (disabled) return colors.textSecondary as string
+    if (status === "danger") return colors.error as string
+    if (focused) return colors.text as string
+    switch (status) {
+      case "success":
+        return colors.primary as string
+      case "warning":
+        return colors.palette.accent500 as string
+      case "info":
+        return colors.palette.secondary400 as string
+      case "default":
+      default:
+        return colors.text as string
+    }
+  }
+
+  const isMultiline = !!textInputProps.multiline
+  const lineHeight = Math.round(dims.fontSize * 1.25)
+  const maxLines = 5 // cap at 7 lines
+  const maxHeight = lineHeight * maxLines // + paddingVertical
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      style={$containerStyles}
-      onPress={focusInput}
-      accessibilityState={{ disabled }}
-    >
-      {!!(label || labelTx) && (
-        <Text
-          preset="formLabel"
-          text={label}
-          tx={labelTx}
-          txOptions={labelTxOptions}
-          {...LabelTextProps}
-          style={themed($labelStyles)}
-        />
+    <View style={containerStyle}>
+      {!!label && (
+        <View style={$labelContainer}>
+          <Text
+            preset="title-2"
+            weight="medium"
+            color={(getSubTextColor() ?? colors.text) as string}
+            style={labelStyle}
+          >
+            {label}
+          </Text>
+          {required && (
+            <Text preset="title-2" weight="bold" color={colors.error as string}>
+              *
+            </Text>
+          )}
+        </View>
       )}
 
-      <View style={themed($inputWrapperStyles)}>
-        {!!LeftAccessory && (
-          <LeftAccessory
-            style={themed($leftAccessoryStyle)}
-            status={status}
-            editable={!disabled}
-            multiline={TextInputProps.multiline ?? false}
-          />
+      {/* Wrap the entire input area with a Pressable to allow tapping anywhere to focus */}
+      <Pressable
+        style={[
+          themed($inputWrapper),
+          {
+            borderRadius: dims.radius,
+            paddingHorizontal: dims.paddingHorizontal,
+            backgroundColor: "#F7F7F8",
+            borderColor: getBorderColor(),
+          },
+          disabled && themed($disabledInputWrapper),
+          inputWrapperStyle,
+        ]}
+        pointerEvents={disabled ? "none" : "auto"}
+      >
+        {!!LeftAccessory && <LeftAccessory style={$leftAccessory} />}
+        {!!leftIcon && (
+          <Pressable onPress={() => onLeftPress && onLeftPress()}>
+            <SvgIcon icon={leftIcon} size={20} fill={getValueColor() ?? "#fff"} />
+          </Pressable>
         )}
-
         <TextInput
-          ref={input}
-          underlineColorAndroid={colors.transparent}
-          textAlignVertical="top"
-          placeholder={placeholderContent}
-          placeholderTextColor={colors.textDim}
-          {...TextInputProps}
+          ref={ref}
+          placeholderTextColor={colors.textSecondary as string}
+          style={[
+            themed($textInput),
+            {
+              color: (getValueColor() ?? colors.text) as string,
+              fontFamily: typography.primary.normal,
+              fontSize: dims.fontSize,
+              lineHeight: lineHeight,
+              maxHeight: isMultiline ? maxHeight : undefined,
+            },
+            Platform.OS === "ios" && themed($iosTextInput),
+            inputStyle,
+          ]}
+          onFocus={() => {
+            setFocused(true)
+            onFocus?.()
+          }}
           editable={!disabled}
-          style={themed($inputStyles)}
+          secureTextEntry={secureTextEntry}
+          {...textInputProps}
+          scrollEnabled={isMultiline ? true : (textInputProps.scrollEnabled as any)}
+          onBlur={() => {
+            setFocused(false)
+            onBlur?.()
+          }}
         />
-
-        {!!RightAccessory && (
-          <RightAccessory
-            style={themed($rightAccessoryStyle)}
-            status={status}
-            editable={!disabled}
-            multiline={TextInputProps.multiline ?? false}
-          />
+        {!!rightIcon && (
+          <Pressable onPress={onRightPress} hitSlop={8} disabled={!onRightPress}>
+            <SvgIcon icon={rightIcon} size={20} fill={fillColor ?? "#fff"} />
+          </Pressable>
         )}
-      </View>
+        {!!RightAccessory && <RightAccessory style={$rightAccessory} />}
+      </Pressable>
 
-      {!!(helper || helperTx) && (
-        <Text
-          preset="formHelper"
-          text={helper}
-          tx={helperTx}
-          txOptions={helperTxOptions}
-          {...HelperTextProps}
-          style={themed($helperStyles)}
-        />
+      {!!subText && (
+        <View style={$subTextContainer}>
+          <View
+            style={[
+              $subTextDot,
+              {
+                backgroundColor: getSubTextColor() ?? colors.textDim,
+              },
+            ]}
+          />
+          <Text preset="body-3" color={(getSubTextColor() ?? colors.textDim) as string}>
+            {subText}
+          </Text>
+        </View>
       )}
-    </TouchableOpacity>
+    </View>
   )
 })
+TextField.displayName = "TextField"
+export default TextField
+// --- styles ---
 
-const $labelStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.xs,
-})
+const $gradient: ViewStyle = {
+  bottom: 0,
+  left: 0,
+  position: "absolute",
+  right: 0,
+  top: 0,
+}
 
-const $inputWrapperStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  alignItems: "flex-start",
+const $inputWrapper: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  alignItems: "center",
+  backgroundColor: "#F7F7F8",
+  borderRadius: 16,
   borderWidth: 1,
-  borderRadius: 4,
-  backgroundColor: colors.palette.neutral200,
-  borderColor: colors.palette.neutral400,
+  flexDirection: "row",
+  gap: 8,
   overflow: "hidden",
+  paddingHorizontal: spacing.sm,
 })
 
-const $inputStyle: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) => ({
+const $labelContainer: ViewStyle = {
+  alignItems: "center",
+  flexDirection: "row",
+  gap: 5,
+  marginBottom: 6,
+}
+
+const $leftAccessory: ViewStyle = {
+  marginRight: 4,
+}
+
+const $rightAccessory: ViewStyle = {
+  marginLeft: 4,
+}
+
+const $subTextContainer: ViewStyle = {
+  alignItems: "center",
+  flexDirection: "row",
+  gap: 6,
+  marginTop: 6,
+}
+
+const $subTextDot: ViewStyle = {
+  borderRadius: 6,
+  height: 6,
+  width: 6,
+}
+
+const $textInput: ViewStyle = {
   flex: 1,
-  alignSelf: "stretch",
-  fontFamily: typography.primary.normal,
-  color: colors.text,
-  fontSize: 16,
-  height: 24,
-  // https://github.com/facebook/react-native/issues/21720#issuecomment-532642093
-  paddingVertical: 0,
-  paddingHorizontal: 0,
-  marginVertical: spacing.xs,
-  marginHorizontal: spacing.sm,
+}
+
+const $iosTextInput: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  paddingVertical: spacing.md,
 })
 
-const $helperStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginTop: spacing.xs,
+const $disabledInputWrapper: ThemedStyle<ViewStyle> = () => ({
+  opacity: 0.6,
 })
 
-const $rightAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginEnd: spacing.xs,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-})
+// --- helpers ---
 
-const $leftAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginStart: spacing.xs,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-})
+type SizeDims = {
+  height: number
+  paddingHorizontal: number
+  radius: number
+  fontSize: number
+}
+
+const SIZE_DIMENSIONS: Record<TextFieldSize, SizeDims> = {
+  lg: { height: 48, paddingHorizontal: 16, radius: 16, fontSize: 16 },
+  md: { height: 40, paddingHorizontal: 14, radius: 16, fontSize: 14 },
+  sm: { height: 36, paddingHorizontal: 12, radius: 16, fontSize: 13 },
+  xs: { height: 32, paddingHorizontal: 10, radius: 16, fontSize: 12 },
+}
+
+function getSizeDimensions(size: TextFieldSize): SizeDims {
+  return SIZE_DIMENSIONS[size] ?? SIZE_DIMENSIONS.md
+}
