@@ -25,6 +25,8 @@ import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 
 import { AuthProvider } from "./context/AuthContext"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { queryClient } from "./services/queries/queryClient"
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
 import { useNavigationPersistence } from "./navigators/navigationUtilities"
@@ -34,6 +36,8 @@ import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
+import { ToastProvider } from "react-native-toast-notifications"
+import LoadingGlobal from "./components/LoadingGlobal"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -98,19 +102,20 @@ export function App() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <BottomSheetModalProvider>
-                <AppNavigator
-                  linking={linking}
-                  initialState={initialNavigationState}
-                  onStateChange={onNavigationStateChange}
-                />
-              </BottomSheetModalProvider>
-            </ThemeProvider>
-          </AuthProvider>
-        </KeyboardProvider>
+        <QueryClientProvider client={queryClient}>
+          <KeyboardProvider>
+            <AuthProvider>
+              <ThemeProvider>
+                <BottomSheetModalProvider>
+                  <ToastProvider offsetTop={60}>
+                    <AppNavigator linking={linking} onStateChange={onNavigationStateChange} />
+                  </ToastProvider>
+                </BottomSheetModalProvider>
+              </ThemeProvider>
+              <LoadingGlobal />
+            </AuthProvider>
+          </KeyboardProvider>
+        </QueryClientProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   )

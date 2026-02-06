@@ -8,6 +8,11 @@ export interface ConfigBaseProps {
     username: string
     aioKey: string
   }
+  environmentBadge?: {
+    text: string
+    visible: boolean
+    color: string
+  }
 }
 
 export type PersistNavigationConfig = ConfigBaseProps["persistNavigation"]
@@ -27,6 +32,11 @@ const BaseConfig: ConfigBaseProps = {
    * is pressed while in that screen. Only affects Android.
    */
   exitRoutes: ["Welcome"],
+  API_URL: "",
+  ADAFRUIT: {
+    username: "",
+    aioKey: "",
+  },
 }
 
 export default BaseConfig

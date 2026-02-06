@@ -48,3 +48,15 @@ export interface ApiConfig {
    */
   timeout: number
 }
+
+/**
+ * Standard API response wrapper.
+ */
+export interface ApiEnvelope<T = unknown> {
+  data?: T
+  statusCode?: number
+  timestamp?: string
+  message?: string
+  errors?: Record<string, unknown>
+  result?: number
+}

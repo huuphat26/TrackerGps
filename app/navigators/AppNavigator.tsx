@@ -19,6 +19,8 @@ import { HistoryStack } from "@/screens/History/HistoryStack"
 import { SplashStack } from "@/screens/Splash/SplashStack"
 import { AuthStack } from "@/screens/Auth/AuthStack"
 
+import { useAuth } from "@/context/AuthContext"
+
 /**
  * This is a list of all the route names that will exit the app if the back button
  * is pressed while in that screen. Only affects Android.
@@ -33,6 +35,8 @@ const AppStack = () => {
     theme: { colors },
   } = useAppTheme()
 
+  const { isAuthenticated } = useAuth()
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -46,13 +50,14 @@ const AppStack = () => {
         animation: "slide_from_right",
         orientation: "portrait_up",
       }}
-      initialRouteName="MainTab"
+      initialRouteName="Splash"
     >
       <Stack.Screen name="Splash" component={SplashStack} />
-      {/* <Stack.Screen name="Auth" component={AuthStack} /> */}
-      <Stack.Screen name="MainTab" component={MainTabNavigator} />
-      <Stack.Screen name="History" component={HistoryStack} />
-      <Stack.Screen name="Map" component={MapStack} />
+      {!isAuthenticated ? (
+        <Stack.Screen name="Auth" component={AuthStack} />
+      ) : (
+        <Stack.Screen name="MainTab" component={MainTabNavigator} />
+      )}
     </Stack.Navigator>
   )
 }

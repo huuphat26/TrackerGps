@@ -11,10 +11,11 @@ import {
   GOOGLE_MAPS_API_KEY_IOS,
   ADAFRUIT_USERNAME,
   ADAFRUIT_AIO_KEY,
+  API_URL_DEV,
 } from "@env"
 
 export default {
-  API_URL: "https://api.rss2json.com/v1/",
+  API_URL: API_URL_DEV ?? "http://localhost:3000/",
   GOOGLE_MAPS_API_KEY: Platform.select({
     android: GOOGLE_MAPS_API_KEY_ANDROID ?? "",
     ios: GOOGLE_MAPS_API_KEY_IOS ?? "",

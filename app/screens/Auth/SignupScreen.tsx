@@ -1,5 +1,13 @@
 import React, { FC, useState } from "react"
-import { Image, TextStyle, View, ViewStyle, ImageStyle, TouchableOpacity } from "react-native"
+import {
+  Image,
+  TextStyle,
+  View,
+  ViewStyle,
+  ImageStyle,
+  TouchableOpacity,
+  Keyboard,
+} from "react-native"
 import { Button, Screen, Text } from "../../components"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
@@ -7,14 +15,55 @@ import { imageRegistry } from "@assets/images"
 import SvgIcon from "@/components/SvgIcon"
 import TextField from "@/components/TextField"
 import { NavigationService } from "@/navigators/navigationUtilities"
+import { useForm, Controller } from "react-hook-form"
+import { useAuth } from "@/context/AuthContext"
+import { RegisterRequest } from "@/services/api"
+import { LoadingGlobalRef } from "@/components/LoadingGlobal"
+import { showToast } from "@/utils/toastService"
 
 interface SignupScreenProps {}
+
 const SignupScreen: FC<SignupScreenProps> = () => {
   const {
     themed,
     theme: { colors },
   } = useAppTheme()
+  const { register, isLoading } = useAuth()
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterRequest>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  })
+
+  const onSignUp = async (data: RegisterRequest) => {
+    Keyboard.dismiss()
+    LoadingGlobalRef.current?.start()
+    try {
+      await register(data)
+      showToast({
+        message: "Đăng ký thành công",
+        type: "SUCCESS",
+        duration: 3000,
+      })
+      NavigationService.navigate("Auth", { screen: "SigninScreen" })
+    } catch (error) {
+      showToast({
+        message: "Email đã tồn tại",
+        type: "ERROR",
+        duration: 2000,
+      })
+    } finally {
+      LoadingGlobalRef.current?.end()
+    }
+  }
 
   return (
     <Screen
@@ -28,35 +77,84 @@ const SignupScreen: FC<SignupScreenProps> = () => {
       </View>
 
       <View style={themed($formContainer)}>
-        <TextField
-          containerStyle={themed($textField)}
-          inputWrapperStyle={themed($inputWrapper)}
-          placeholder="Họ và tên"
-          autoCapitalize="words"
-          leftIcon="User"
+        <Controller
+          control={control}
+          name="name"
+          rules={{ required: "Họ và tên không được để trống" }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextField
+              containerStyle={themed($textField)}
+              inputWrapperStyle={themed($inputWrapper)}
+              placeholder="Họ và tên"
+              autoCapitalize="words"
+              leftIcon="User"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              subText={errors.name?.message}
+              status={errors.name ? "danger" : undefined}
+            />
+          )}
         />
 
-        <TextField
-          containerStyle={themed($textField)}
-          inputWrapperStyle={themed($inputWrapper)}
-          placeholder="Số điện thoại"
-          keyboardType="phone-pad"
-          leftIcon="NumPad"
+        <Controller
+          control={control}
+          name="email"
+          rules={{
+            required: "Email không được để trống",
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "Email không hợp lệ",
+            },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextField
+              containerStyle={themed($textField)}
+              inputWrapperStyle={themed($inputWrapper)}
+              placeholder="Email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              leftIcon="User"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              subText={errors.email?.message}
+              status={errors.email ? "danger" : undefined}
+            />
+          )}
         />
 
-        <TextField
-          containerStyle={themed($textField)}
-          inputWrapperStyle={themed($inputWrapper)}
-          placeholder="Mật khẩu"
-          secureTextEntry={isAuthPasswordHidden}
-          RightAccessory={() => (
-            <TouchableOpacity onPress={() => setIsAuthPasswordHidden(!isAuthPasswordHidden)}>
-              <SvgIcon
-                name={isAuthPasswordHidden ? "EyeOff" : "EyeActive"}
-                size={20}
-                fill={colors.textDim}
-              />
-            </TouchableOpacity>
+        <Controller
+          control={control}
+          name="password"
+          rules={{
+            required: "Mật khẩu không được để trống",
+            minLength: {
+              value: 6,
+              message: "Mật khẩu phải có ít nhất 6 ký tự",
+            },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextField
+              containerStyle={themed($textField)}
+              inputWrapperStyle={themed($inputWrapper)}
+              placeholder="Mật khẩu"
+              secureTextEntry={isAuthPasswordHidden}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              subText={errors.password?.message}
+              status={errors.password ? "danger" : undefined}
+              RightAccessory={() => (
+                <TouchableOpacity onPress={() => setIsAuthPasswordHidden(!isAuthPasswordHidden)}>
+                  <SvgIcon
+                    name={isAuthPasswordHidden ? "EyeOff" : "EyeActive"}
+                    size={20}
+                    fill={colors.textDim}
+                  />
+                </TouchableOpacity>
+              )}
+            />
           )}
         />
 
@@ -64,23 +162,23 @@ const SignupScreen: FC<SignupScreenProps> = () => {
           text="Đăng ký"
           style={themed($button)}
           textStyle={themed($buttonText)}
-          onPress={() => {}}
+          onPress={handleSubmit(onSignUp)}
+          isLoading={isLoading}
         />
       </View>
 
       <View style={themed($footerContainer)}>
-        <Text style={themed($footerText)}>
-          Đã có tài khoản?{" "}
-          <Text
-            text="Đăng nhập ngay"
-            style={themed($link)}
-            onPress={() =>
-              NavigationService.navigate("Auth", {
-                screen: "SigninScreen",
-              })
-            }
-          />
-        </Text>
+        <TouchableOpacity
+          onPress={() =>
+            NavigationService.navigate("Auth", {
+              screen: "SigninScreen",
+            })
+          }
+        >
+          <Text style={themed($footerText)}>
+            Đã có tài khoản? <Text text="Đăng nhập ngay" style={themed($link)} />
+          </Text>
+        </TouchableOpacity>
       </View>
     </Screen>
   )

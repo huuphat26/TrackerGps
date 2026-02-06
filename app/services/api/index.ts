@@ -1,11 +1,5 @@
-/**
- * This Api class lets you define an API endpoint and methods to request
- * data and process it.
- *
- * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
- * documentation for more details.
- */
 import { ApiResponse, ApisauceInstance, create } from "apisauce"
+import { DeviceEventEmitter } from "react-native"
 
 import Config from "@/config"
 import type { EpisodeItem } from "@/services/api/types"
@@ -41,28 +35,95 @@ export class Api {
         Accept: "application/json",
       },
     })
+
+    // Add interceptor to handle 401 Unauthorized
+    this.apisauce.addResponseTransform((response) => {
+      if (response.status === 401) {
+        DeviceEventEmitter.emit("LOGOUT")
+      }
+    })
+  }
+
+  /**
+   * Set a header for all subsequent requests.
+   */
+  setHeader(name: string, value: string) {
+    this.apisauce.setHeader(name, value)
+  }
+
+  /**
+   * Set the base URL of the API.
+   */
+  setBaseUrl(url: string) {
+    this.apisauce.setBaseURL(url)
+  }
+
+  /**
+   * Generic GET request
+   */
+  async get<T>(path: string, params?: Record<string, any>): Promise<T> {
+    const response: ApiResponse<T> = await this.apisauce.get(path, params)
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      throw problem || { kind: "unknown" }
+    }
+
+    return response.data as T
+  }
+
+  /**
+   * Generic POST request
+   */
+  async post<T>(path: string, data?: any): Promise<T> {
+    const response: ApiResponse<T> = await this.apisauce.post(path, data)
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      throw problem || { kind: "unknown" }
+    }
+
+    return response.data as T
+  }
+
+  /**
+   * Generic PUT request
+   */
+  async put<T>(path: string, data?: any): Promise<T> {
+    const response: ApiResponse<T> = await this.apisauce.put(path, data)
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      throw problem || { kind: "unknown" }
+    }
+
+    return response.data as T
+  }
+
+  /**
+   * Generic DELETE request
+   */
+  async delete<T>(path: string, params?: Record<string, any>): Promise<T> {
+    const response: ApiResponse<T> = await this.apisauce.delete(path, params)
+
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      throw problem || { kind: "unknown" }
+    }
+
+    return response.data as T
   }
 
   /**
    * Gets a list of recent React Native Radio episodes.
+   * @deprecated Use the generic get method instead
    */
   async getEpisodes(): Promise<{ kind: "ok"; episodes: EpisodeItem[] } | GeneralApiProblem> {
-    // make the api call
-    const response: ApiResponse<ApiFeedResponse> = await this.apisauce.get(
-      `api.json?rss_url=https%3A%2F%2Ffeeds.simplecast.com%2FhEI_f9Dx`,
-    )
-
-    // the typical ways to die when calling an api
-    if (!response.ok) {
-      const problem = getGeneralApiProblem(response)
-      if (problem) return problem
-    }
-
-    // transform the data into the format we are expecting
     try {
-      const rawData = response.data
+      const rawData = await this.get<ApiFeedResponse>(
+        `api.json?rss_url=https%3A%2F%2Ffeeds.simplecast.com%2FhEI_f9Dx`,
+      )
 
-      // This is where we transform the data into the shape we expect for our model.
       const episodes: EpisodeItem[] =
         rawData?.items.map((raw) => ({
           ...raw,
@@ -71,12 +132,17 @@ export class Api {
       return { kind: "ok", episodes }
     } catch (e) {
       if (__DEV__ && e instanceof Error) {
-        console.error(`Bad data: ${e.message}\n${response.data}`, e.stack)
+        console.error(`Bad data: ${e.message}`, e.stack)
       }
-      return { kind: "bad-data" }
+      return e as GeneralApiProblem
     }
   }
 }
 
-// Singleton instance of the API for convenience
+// Singleton instances of the API for convenience
 export const api = new Api()
+
+export * from "./AuthServices/AuthService"
+export * from "./AuthServices/AuthType"
+export * from "./UserServices/UserService"
+export * from "./UserServices/UserType"
