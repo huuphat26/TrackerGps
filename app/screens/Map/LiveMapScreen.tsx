@@ -20,6 +20,7 @@ import { MarkerInfo, MarkerInfoSheet } from "./components/MarkerInfoSheet"
 import { RetryConnectionButton } from "./components/RetryConnectionButton"
 import { SharedMapView } from "@/components/Map"
 import ConnectionStatusBadge from "./components/ConnectionStatusBadge"
+import MapEmptyState from "./components/MapEmptyState"
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<MapStackParamList, "LiveMapScreen">,
@@ -39,7 +40,6 @@ const LiveMapScreen: FC<Props> = ({ navigation, route }) => {
   const [cameraImage, setCameraImage] = useState<string | null>(null)
   const [isLoadingImage, setIsLoadingImage] = useState(false)
 
-  // MQTT connection with auto-retry
   const {
     status: mqttStatus,
     retryCount,
@@ -50,7 +50,6 @@ const LiveMapScreen: FC<Props> = ({ navigation, route }) => {
     enableAutoRetry: true,
   })
 
-  // Focus on specific device if deviceId provided
   useEffect(() => {
     if (deviceId && markers.length > 0) {
       const targetMarker = markers.find((m) => m.id === deviceId)
@@ -60,7 +59,6 @@ const LiveMapScreen: FC<Props> = ({ navigation, route }) => {
     }
   }, [deviceId, markers])
 
-  // Listen to live GPS and camera updates
   useEffect(() => {
     const unsubscribeGps = gpsFeedService.onLocationUpdate((location) => {
       const newCoordinate = {
@@ -120,7 +118,7 @@ const LiveMapScreen: FC<Props> = ({ navigation, route }) => {
 
     const command = JSON.stringify({
       action: "capture",
-      quality: 12,
+      quality: 14,
     })
     cameraCommandService.sendCommand(command)
 
@@ -138,6 +136,12 @@ const LiveMapScreen: FC<Props> = ({ navigation, route }) => {
       params: { deviceId: selectedMarkerInfo?.id },
     })
   }, [selectedMarkerInfo, navigation])
+
+  const handleAddDevice = useCallback(() => {
+    navigation.navigate("Devices", { screen: "AddDeviceScreen" })
+  }, [navigation])
+
+  const isEmpty = markers.length === 0
 
   return (
     <View style={themed($container)}>
@@ -164,6 +168,8 @@ const LiveMapScreen: FC<Props> = ({ navigation, route }) => {
       />
 
       <ImageViewerSheet ref={imageViewerRef} imageUri={cameraImage} isLoading={isLoadingImage} />
+
+      {isEmpty && <MapEmptyState onAddDevice={handleAddDevice} />}
 
       <ConnectionStatusBadge status={mqttStatus} retryCount={retryCount} />
       <RetryConnectionButton visible={mqttStatus === "error"} onRetry={retryMqttConnection} />

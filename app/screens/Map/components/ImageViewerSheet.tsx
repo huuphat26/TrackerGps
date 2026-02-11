@@ -27,15 +27,6 @@ export const ImageViewerSheet = forwardRef<BottomSheetModal, ImageViewerSheetPro
     const { themed, theme } = useAppTheme()
     const { colors } = theme
 
-    // Debug logging
-    useEffect(() => {
-      console.log("[ImageViewerSheet] State changed:", {
-        hasImage: !!imageUri,
-        imageLength: imageUri?.length || 0,
-        isLoading,
-      })
-    }, [imageUri, isLoading])
-
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
         <BottomSheetBackdrop

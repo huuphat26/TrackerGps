@@ -17,9 +17,8 @@ import TextField from "@/components/TextField"
 import { useNavigation } from "@react-navigation/native"
 import { useForm, Controller } from "react-hook-form"
 import { useAuth } from "@/context/AuthContext"
-import { LoginRequest, UserServices } from "@/services/api"
+import { LoginRequest } from "@/services/api"
 import { LoadingGlobalRef } from "@/components/LoadingGlobal"
-import { NavigationService } from "@/navigators/navigationUtilities"
 
 interface SigninScreenProps {}
 
@@ -132,7 +131,6 @@ const SigninScreen: FC<SigninScreenProps> = () => {
           text="Đăng nhập"
           style={themed($button)}
           onPress={handleSubmit(onSignIn)}
-          // isLoading={isLoading}
           textStyle={{
             color: colors.white,
           }}

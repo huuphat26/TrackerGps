@@ -36,10 +36,35 @@ export class Api {
       },
     })
 
-    // Add interceptor to handle 401 Unauthorized
+    // Add interceptor to handle global errors
     this.apisauce.addResponseTransform((response) => {
-      if (response.status === 401) {
-        DeviceEventEmitter.emit("LOGOUT")
+      const data = response.data as any
+      switch (response.status) {
+        case 401:
+          DeviceEventEmitter.emit("LOGOUT")
+          break
+        case 400:
+          // Lỗi Validation
+          DeviceEventEmitter.emit("SHOW_TOAST", {
+            type: "error",
+            message: Array.isArray(data?.message)
+              ? data.message[0]
+              : data?.message || "Bad Request",
+          })
+          break
+        case 409:
+          // Lỗi Conflict (ví dụ: deviceId đã tồn tại)
+          DeviceEventEmitter.emit("SHOW_TOAST", {
+            type: "info",
+            message: data?.message || "Conflict",
+          })
+          break
+        case 500:
+          // Lỗi hệ thống
+          DeviceEventEmitter.emit("SHOW_ERROR_MODAL", {
+            message: "Lỗi hệ thống, vui lòng thử lại sau.",
+          })
+          break
       }
     })
   }
@@ -146,3 +171,5 @@ export * from "./AuthServices/AuthService"
 export * from "./AuthServices/AuthType"
 export * from "./UserServices/UserService"
 export * from "./UserServices/UserType"
+export * from "./DeviceServices/DeviceService"
+export * from "./DeviceServices/DeviceType"

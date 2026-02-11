@@ -1,11 +1,12 @@
-import { FC, useEffect, useState } from "react"
-import { View, ViewStyle, TextStyle, FlatList, TouchableOpacity, Image } from "react-native"
+import { FC, useState } from "react"
+import { View, ViewStyle, TextStyle, FlatList, TouchableOpacity } from "react-native"
 import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { Text } from "@/components/Text"
 import { Header } from "@/components/Header"
 import SvgIcon from "@/components/SvgIcon"
-import { useHistoryData, HistoryLogEntry, StatusType } from "@/services/maps/useHistoryData"
+import { HistoryLogEntry, StatusType } from "@/services/maps/useHistoryData"
+import { useDeviceDetails, useDeviceHistory } from "@/services/queries/Device/useDeviceQueries"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CompositeScreenProps } from "@react-navigation/native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
@@ -17,28 +18,37 @@ type HistoryScreenProps = CompositeScreenProps<
   NativeStackScreenProps<AppStackParamList>
 >
 
-export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation }) => {
+export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation, route }) => {
   const { theme, themed } = useAppTheme()
-  const { fetchHistory, currentDate } = useHistoryData()
-  const [logs, setLogs] = useState<HistoryLogEntry[]>([])
+  const { deviceId } = route.params || { deviceId: "" }
+  const [currentDate] = useState(new Date())
 
-  useEffect(() => {
-    const load = async () => {
-      const data = await fetchHistory(currentDate, "1")
-      setLogs(data)
-    }
-    load()
-  }, [currentDate])
+  const { data: device } = useDeviceDetails(deviceId || "")
+
+  const { data: historyData } = useDeviceHistory(deviceId || "", {
+    page: 1,
+    pageSize: 20,
+    from: currentDate.toISOString(),
+  })
+
+  const logs: HistoryLogEntry[] = (historyData || []).map((item, index) => ({
+    id: index.toString(),
+    time: new Date(item.createdAt).toLocaleTimeString(),
+    location: `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}`,
+    eventTitle: "Position Update",
+    statusType: "moving",
+    coordinate: { latitude: item.latitude, longitude: item.longitude },
+  }))
 
   const renderStatusBadge = (type: StatusType) => {
-    const config = {
+    const config: Record<string, { text: string; color: string; bg: string }> = {
       moving: { text: "Moving", color: "#007AFF", bg: "#E5F1FF" },
       stop: { text: "Stop", color: "#FF3B30", bg: "#FFEBEB" },
       engine_on: { text: "Engine On", color: "#34C759", bg: "#EBF9EE" },
       parked: { text: "Parked", color: "#FF9500", bg: "#FFF5E5" },
       offline: { text: "Offline", color: "#8E8E93", bg: "#F2F2F7" },
     }
-    const { text, color, bg } = config[type]
+    const { text, color, bg } = config[type] || config.moving
     return (
       <View style={[themed($badge), { backgroundColor: bg }]}>
         <View style={[themed($badgeDot), { backgroundColor: color }]} />
@@ -50,23 +60,12 @@ export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation }) => {
   const renderLogItem = ({ item }: { item: HistoryLogEntry }) => (
     <View style={themed($row)}>
       <View style={themed($timeCol)}>
-        <Text text={item.time.split(" ")[0]} style={themed($timeText)} />
-        <Text text={item.time.split(" ")[1]} style={themed($timePeriod)} />
+        <Text text={item?.time} style={themed($timeText)} />
       </View>
 
       <View style={themed($locationCol)}>
-        <Text
-          text={
-            item.eventTitle === "Moving" ||
-            item.eventTitle === "Short Stop" ||
-            item.eventTitle === "Parked(Overnight)"
-              ? item.location
-              : item.eventTitle
-          }
-          preset="bold"
-          style={themed($eventTitle)}
-        />
-        <Text text={item.subInfo || item.location} style={themed($addressText)} />
+        <Text text={item?.eventTitle} preset="bold" style={themed($eventTitle)} />
+        <Text text={item?.location} style={themed($addressText)} />
       </View>
 
       <View style={themed($statusCol)}>{renderStatusBadge(item.statusType)}</View>
@@ -79,38 +78,47 @@ export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation }) => {
         title="History"
         leftIcon="back"
         onLeftPress={() => navigation.goBack()}
-        rightIcon="bell" // Placeholder for calendar icon if not available
+        rightIcon="bell"
         onRightPress={() => {}}
       />
 
       <View style={themed($content)}>
         <View style={themed($dateNavigator)}>
           <TouchableOpacity>
-            <SvgIcon icon="Map" size={20} style={{ transform: [{ rotate: "180deg" }] }} />
+            <SvgIcon icon="TimeLine" size={20} style={{ transform: [{ rotate: "180deg" }] }} />
           </TouchableOpacity>
-          <Text text="Feb 03, 2024" preset="bold" />
-          <TouchableOpacity>
-            <SvgIcon icon="Map" size={20} />
-          </TouchableOpacity>
+          <Text text={currentDate.toDateString()} preset="bold" />
         </View>
 
-        <View style={themed($deviceCard)}>
-          <View style={themed($avatarContainer)}>
-            <Image
-              source={{
-                uri: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=100&auto=format&fit=crop",
-              }}
-              style={themed($avatar)}
-            />
+        {device && (
+          <View style={themed($deviceCard)}>
+            <View style={themed($avatarContainer)}>
+              <SvgIcon icon="Car" size={32} fill={theme.colors.brand.primary} />
+            </View>
+            <View style={themed($deviceInfo)}>
+              <Text text={device.name} preset="bold" style={{ fontSize: 18 }} />
+              <Text
+                text={device.licensePlate || device.deviceId}
+                style={{ color: theme.colors.textDim }}
+              />
+            </View>
+            <View
+              style={[
+                themed($activeBadge),
+                { backgroundColor: device.status === "online" ? "#EBF9EE" : "#F2F2F7" },
+              ]}
+            >
+              <Text
+                text={device.status === "online" ? "Online" : "Offline"}
+                style={{
+                  color: device.status === "online" ? "#34C759" : "#8E8E93",
+                  fontSize: 12,
+                  fontWeight: "600",
+                }}
+              />
+            </View>
           </View>
-          <View style={themed($deviceInfo)}>
-            <Text text="Toyota Camry" preset="bold" style={{ fontSize: 18 }} />
-            <Text text="51F-123.45" style={{ color: theme.colors.textDim }} />
-          </View>
-          <View style={[themed($activeBadge), { backgroundColor: "#EBF9EE" }]}>
-            <Text text="Active" style={{ color: "#34C759", fontSize: 12, fontWeight: "600" }} />
-          </View>
-        </View>
+        )}
 
         <View style={themed($tableHeader)}>
           <Text text="TIME" style={themed($headerLabel)} />
@@ -121,24 +129,22 @@ export const HistoryScreen: FC<HistoryScreenProps> = ({ navigation }) => {
         <FlatList
           data={logs}
           renderItem={renderLogItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item?.id + index.toString()}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            <View style={themed($footer)}>
-              <TouchableOpacity
-                style={themed($viewButton)}
-                onPress={() =>
-                  navigation.navigate("HistoryMapScreen", {
-                    deviceId: "1",
-                  })
-                }
-              >
-                <SvgIcon icon="Map" fill="white" size={20} />
-                <Text text="View Route on Map" style={themed($viewButtonText)} />
-              </TouchableOpacity>
-            </View>
-          }
         />
+        <View style={themed($footer)}>
+          <TouchableOpacity
+            style={themed($viewButton)}
+            onPress={() =>
+              navigation.navigate("HistoryMapScreen", {
+                deviceId: deviceId,
+              })
+            }
+          >
+            <SvgIcon icon="Map" fill="white" size={20} />
+            <Text text="View Route on Map" style={themed($viewButtonText)} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   )
@@ -157,7 +163,7 @@ const $content: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $dateNavigator: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
   flexDirection: "row",
   alignItems: "center",
-  justifyContent: "space-between",
+  gap: spacing.xl,
   backgroundColor: colors.palette.neutral100,
   padding: spacing.sm,
   borderRadius: 20,
@@ -182,19 +188,14 @@ const $avatarContainer: ThemedStyle<ViewStyle> = ({ colors }) => ({
   marginRight: 12,
 })
 
-const $avatar: ThemedStyle<any> = () => ({
-  width: "100%",
-  height: "100%",
-})
-
 const $deviceInfo: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
 })
 
 const $activeBadge: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: 8,
-  paddingVertical: 2,
-  borderRadius: 10,
+  paddingHorizontal: spacing.xs,
+  paddingVertical: spacing.xxxs,
+  borderRadius: spacing.sm,
 })
 
 const $tableHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
@@ -225,11 +226,6 @@ const $timeCol: ThemedStyle<ViewStyle> = () => ({
 const $timeText: ThemedStyle<TextStyle> = () => ({
   fontSize: 14,
   fontWeight: "bold",
-})
-
-const $timePeriod: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 10,
-  color: colors.textDim,
 })
 
 const $locationCol: ThemedStyle<ViewStyle> = () => ({
@@ -274,10 +270,6 @@ const $badgeText: ThemedStyle<TextStyle> = () => ({
 
 const $footer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginTop: spacing.lg,
-  // position: "absolute",
-  // bottom: spacing.lg,
-  // left: spacing.md,
-  // right: spacing.md,
 })
 
 const $viewButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({

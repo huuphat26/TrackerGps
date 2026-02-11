@@ -50,9 +50,9 @@ const AppStack = () => {
         animation: "slide_from_right",
         orientation: "portrait_up",
       }}
-      initialRouteName="Splash"
+      initialRouteName={isAuthenticated ? "MainTab" : "Auth"}
     >
-      <Stack.Screen name="Splash" component={SplashStack} />
+      {/* <Stack.Screen name="Splash" component={SplashStack} /> */}
       {!isAuthenticated ? (
         <Stack.Screen name="Auth" component={AuthStack} />
       ) : (

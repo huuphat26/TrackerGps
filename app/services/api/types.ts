@@ -50,13 +50,34 @@ export interface ApiConfig {
 }
 
 /**
+ * Standard API response wrapper for paginated lists.
+ */
+export interface CheckResponse {
+  valid: boolean
+}
+
+export interface ApiErrorResponse {
+  statusCode: number
+  message: string | string[]
+  error: string
+}
+
+export interface PaginationMeta {
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  meta: PaginationMeta
+}
+
+/**
  * Standard API response wrapper.
  */
-export interface ApiEnvelope<T = unknown> {
-  data?: T
-  statusCode?: number
-  timestamp?: string
-  message?: string
-  errors?: Record<string, unknown>
-  result?: number
+export interface ApiResponse<T> {
+  data: T
+  statusCode: number
+  timestamp: string
 }

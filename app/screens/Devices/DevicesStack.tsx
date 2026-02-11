@@ -2,9 +2,11 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import { useAppTheme } from "@/theme/context"
 import DevicesScreen from "./DevicesScreen"
+import AddDeviceScreen from "./AddDeviceScreen"
 
 export type DevicesStackParamList = {
   DevicesScreen: undefined
+  AddDeviceScreen: undefined
 }
 
 const Stack = createNativeStackNavigator<DevicesStackParamList>()
@@ -23,6 +25,7 @@ export const DevicesStack = () => {
       }}
     >
       <Stack.Screen name="DevicesScreen" component={DevicesScreen} />
+      <Stack.Screen name="AddDeviceScreen" component={AddDeviceScreen} />
     </Stack.Navigator>
   )
 }

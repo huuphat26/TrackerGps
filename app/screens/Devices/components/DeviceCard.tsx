@@ -5,15 +5,7 @@ import { ThemedStyle } from "@/theme/types"
 import SvgIcon from "@/components/SvgIcon"
 import { Text } from "@/components/Text"
 
-export interface Device {
-  id: string
-  name: string
-  licensePlate: string
-  status: "online" | "offline"
-  battery: number
-  signal: number
-  type: "car" | "bike"
-}
+import { Device } from "@/services/api/DeviceServices/DeviceType"
 
 interface DeviceCardProps {
   device: Device
@@ -71,7 +63,7 @@ export const DeviceCard = ({ device, onWakeUp, onViewMap, onPress }: DeviceCardP
                 <Text text={` • 📶 `} style={themed($metaText)} />
               </>
             )}
-            {!isOnline && <Text text={` • Last seen`} style={themed($metaText)} />}
+            {!isOnline && <Text text={` • Xem gần đây`} style={themed($metaText)} />}
           </View>
         </View>
       </View>
@@ -83,12 +75,12 @@ export const DeviceCard = ({ device, onWakeUp, onViewMap, onPress }: DeviceCardP
           disabled={!isOnline}
         >
           <Text
-            text="Wake Up"
+            text="Đánh thức"
             style={[themed($wakeUpText), !isOnline && themed($wakeUpTextDisabled)]}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => onViewMap(device)} activeOpacity={0.7}>
-          <Text text="View Map" style={themed($viewMapText)} />
+          <Text text="Xem bản đồ" style={themed($viewMapText)} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

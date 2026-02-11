@@ -12,7 +12,7 @@ export type GeneralApiProblem =
   /**
    * The server experienced a problem. Any 5xx error.
    */
-  | { kind: "server" }
+  | { kind: "server"; data?: any }
   /**
    * We're not allowed because we haven't identified ourself. This is 401.
    */
@@ -52,7 +52,7 @@ export function getGeneralApiProblem(response: ApiResponse<any>): GeneralApiProb
     case "TIMEOUT_ERROR":
       return { kind: "timeout", temporary: true }
     case "SERVER_ERROR":
-      return { kind: "server" }
+      return { kind: "server", data: response.data }
     case "UNKNOWN_ERROR":
       return { kind: "unknown", temporary: true }
     case "CLIENT_ERROR":
@@ -63,6 +63,9 @@ export function getGeneralApiProblem(response: ApiResponse<any>): GeneralApiProb
           return { kind: "forbidden" }
         case 404:
           return { kind: "not-found" }
+        case 400:
+        case 409:
+          return { kind: "server", data: response.data } // Treat 400/409 as server errors with data
         default:
           return { kind: "rejected" }
       }
